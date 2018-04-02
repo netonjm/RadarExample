@@ -7,7 +7,7 @@ namespace RadarExample.WinForms
 	{
 		public static int Distance (this Point sender, Point point)
 		{
-			return (int)Math.Floor (Math.Sqrt (Math.Pow ((sender.X - point.X), 2) + Math.Pow ((sender.Y - point.Y), 2)));
+			return (int)Math.Round (Math.Sqrt (Math.Pow ((sender.X - point.X), 2) + Math.Pow ((sender.Y - point.Y), 2)));
 		}
 
 		public static bool Intresects (this Point sender, Point lineInit, Point lineEnd)
@@ -19,8 +19,8 @@ namespace RadarExample.WinForms
 		{
 			double len = p1.Distance (p2);
 			double ratio = distance / len;
-			int x = (int)Math.Floor (ratio * p2.X + (1.0 - ratio) * p1.X);
-			int y = (int)Math.Floor (ratio * p2.Y + (1.0 - ratio) * p1.Y);
+			int x = (int)Math.Round (ratio * p2.X + (1.0 - ratio) * p1.X);
+			int y = (int)Math.Round (ratio * p2.Y + (1.0 - ratio) * p1.Y);
 			return new Point (x, y);
 		}
 	}
