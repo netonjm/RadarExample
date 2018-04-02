@@ -17,9 +17,9 @@ namespace RadarExample.WinForms
 		public int Angle { get; set; }
 		public int Distance { get; private set; }
 
-		int HAND;
+		int Radius;
 		int x, y;       //HAND coordinate
-		int tx, ty, lim = 20;
+		int lim = 20;
 
 		int lines = 4;
 		int lineSeparation;
@@ -41,7 +41,27 @@ namespace RadarExample.WinForms
 
 			Image = bmp;
 			g.Dispose ();
+
+			lastAngle = Angle;
 		}
+
+		static Point GetPointFromAngle (Point center, int radius, int angle, int lim)
+		{
+			int tu = (angle - lim) % 360;
+			if (angle >= 0 && angle <= 180) {
+				return new Point (
+					center.X + (int)(radius * Math.Sin (Math.PI * angle / 180)),
+					center.Y - (int)(radius * Math.Cos (Math.PI * angle / 180))
+				);
+			} 
+
+			return new Point (
+				center.X - (int)(radius * -Math.Sin (Math.PI * angle / 180)),
+				center.Y - (int)(radius * Math.Cos (Math.PI * angle / 180))
+			);
+		}
+
+		int GetCorrectedAngle (int angle) => angle >= 360 ? angle - 360 : angle;
 
 		void DrawRadar ()
 		{
@@ -52,44 +72,24 @@ namespace RadarExample.WinForms
 				g.DrawString (string.Format("{0}cm", (10 * i)), drawFont, drawBrush, Center.X + (item/2) + 5, Center.Y - 17, drawFormat);
 			}
 
-			//draw perpendicular line
-			g.DrawLine (p, new Point (Center.X, 0), new Point (Center.X, Height)); // UP-DOWN
-			g.DrawLine (p, new Point (0, Center.Y), new Point (Width, Center.Y)); //LEFT-RIGHT
+			Point topPoint;
+			for (int i = 270; i <= (270 + (30 * 9)); i += 30) {
+				topPoint = GetPointFromAngle (Center, Radius, i, lim);
+				g.DrawLine (p, new Point (Center.X, Center.Y), topPoint);
+				g.DrawString (string.Format ("{0}º", GetCorrectedAngle (i)), drawFont, drawBrush, topPoint, drawFormat);
+			}
 
 			g.DrawString (string.Format ("Object: {0}", "Out of Range"), drawFont, drawBrush, 15, 10, drawFormat);
-			g.DrawString (string.Format ("Angle: {0}º", 450 - Angle), drawFont, drawBrush, 15, 30, drawFormat);
-
+			g.DrawString (string.Format ("Angle: {0}º",  GetCorrectedAngle(Angle)), drawFont, drawBrush, 15, 30, drawFormat);
 			g.DrawString (string.Format ("Distance: {0}cm", Distance), drawFont, drawBrush, 15, 50, drawFormat);
 		}
 
+		int lastAngle;
+
 		void DrawHand ()
 		{
-			//calculate x, y coordinate of HAND
-			int tu = (Angle - lim) % 360;
-
-			if (Angle >= 0 && Angle <= 180) {
-				//right half
-				//u in degree is converted into radian.
-
-				x = Center.X + (int)(HAND * Math.Sin (Math.PI * Angle / 180));
-				y = Center.Y - (int)(HAND * Math.Cos (Math.PI * Angle / 180));
-			} else {
-				x = Center.X - (int)(HAND * -Math.Sin (Math.PI * Angle / 180));
-				y = Center.Y - (int)(HAND * Math.Cos (Math.PI * Angle / 180));
-			}
-
-			if (tu >= 0 && tu <= 180) {
-				//right half
-				//tu in degree is converted into radian.
-				tx = Center.X + (int)(HAND * Math.Sin (Math.PI * tu / 180));
-				ty = Center.Y - (int)(HAND * Math.Cos (Math.PI * tu / 180));
-			} else {
-				tx = Center.X - (int)(HAND * -Math.Sin (Math.PI * tu / 180));
-				ty = Center.Y - (int)(HAND * Math.Cos (Math.PI * tu / 180));
-			}
-
 			var lineStart = new Point (Center.X, Center.Y);
-			var lineEnd = new Point (x, y);
+			var lineEnd = GetPointFromAngle (Center, Radius, Angle, lim);
 
 			int lowerDistance = Height;
 			drawPoints.Clear ();
@@ -99,7 +99,7 @@ namespace RadarExample.WinForms
 			for (int i = 0; i < Points.Count; i++) {
 				var distance = Points [i].Distance (Center);
 
-				if (Points [i].Intresects (lineStart, lineEnd)) {
+				if (Points [i].Intresects (lineStart, lineEnd) ) {
 					if (distance < lowerDistance) {
 						lowerDistance = distance;
 						Distance = Height - lowerDistance;
@@ -137,12 +137,11 @@ namespace RadarExample.WinForms
 			//graphics
 			g = Graphics.FromImage (bmp);
 
-			//center
-			Center.X = Width / 2;
-			Center.Y = Height / 2;
+			Radius = Math.Min (Width, Height) / 2;
 
-			//initial degree of HAND
-			HAND = Center.X;
+			//center
+			Center.X = Radius;
+			Center.Y = Radius;
 		}
 
 		protected override void Dispose (bool disposing)
