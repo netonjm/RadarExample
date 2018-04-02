@@ -40,7 +40,7 @@ namespace RadarExample.WinForms
 			ResizeRadar ();
 
 			//timer
-			t.Interval = 110; //in millisecond
+			t.Interval = 100; //in millisecond
 			t.Tick += OnTick;
 			t.Start ();
 		}
